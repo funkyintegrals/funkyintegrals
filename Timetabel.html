@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; background-color: #e6e6fa; padding-bottom: 50px;}
+      h1 { text-align: center; padding: 20px; }
+      #timetable {
+        display: grid;
+        grid-template-columns: 50px repeat(5, 1fr); 
+        grid-template-rows: 40px repeat(6, 100px); 
+        gap: 5px;
+        width: 95%;
+        margin: 0 auto;
+      }
+      .header-cell {
+        background-color: #6a5acd;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        border-radius: 4px;
+      }
+      .timetable-cell {
+        background-color: white;
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        font-size: 0.9em;
+      }
+      .timetable-cell:hover { background-color: #f0f0f0; }
+      
+      #overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      
+      #modal {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 350px;
+        max-width: 90%;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+      }
+  
+      .task-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f9f9f9;
+        margin: 5px 0;
+        padding: 8px;
+        border-radius: 4px;
+        border-left: 4px solid #6a5acd;
+      }
+  
+      .task-item button {
+        background: #ff4d4d;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 2px 8px;
+      }
+  
+      .input-group { margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
+      input, textarea { width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 8px; }
+      .modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
+      button { cursor: pointer; padding: 8px 15px; }
+    </style>
+  </head>
+  <body>
+  
+    <div id="admin-login" style="padding: 10px; background: #fff; border-bottom: 1px solid #ccc;">
+      <input id="adminEmail" placeholder="Email" style="width: auto;">
+      <input id="adminPass" type="password" placeholder="Password" style="width: auto;">
+      <button id="LoginBtn">Login</button>
+      <button id="LogoutBtn" style="display:none;">Logout</button>
+    </div>
+  
+    <h1>Timetabel</h1>
+    <div style="text-align:center; margin-bottom:20px;">
+      <a href="/myrithm/index.html">[Go Back]</a>
+    </div>
+    <div style="text-align:center; margin-bottom:20px;">
+      <button id="weekA">Week A</button>
+      <button id="weekB">Week B</button>
+      <span id="weekLabel" style="font-weight: bold; margin-left: 10px;">Week A</span>
+    </div>
+  
+    <div id="timetable"></div>
+  
+    <div id="overlay">
+      <div id="modal">
+        <h2 id="modalTitle" style="margin-top:0;"></h2>
+        
+        <div id="taskList" style="max-height: 200px; overflow-y: auto;">
+          </div>
+  
+        <div class="input-group">
+          <h4>Add New Task</h4>
+          <textarea id="taskText" placeholder="Task description..."></textarea>
+          <label>Due Date:</label>
+          <input type="date" id="dueDate">
+          <div class="modal-buttons">
+            <button id="saveBtn" style="background: #4CAF50; color: white; border:none;">Add Task</button>
+            <button id="closeBtn">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+      import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+      import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+  
+      const firebaseConfig = {
+        apiKey: "AIzaSyCGdF9m5jAC_PV7ainjGr2vsRvxRSuHRgE",
+        authDomain: "myrithm-storage.firebaseapp.com",
+        projectId: "myrithm-storage",
+        storageBucket: "myrithm-storage.firebasestorage.app",
+        messagingSenderId: "1069448713700",
+        appId: "1:1069448713700:web:248cd3e46328c2a89823f1"
+      };
+      const timetableData = {
+        A: [
+          ["Chinese", "History", "History", "Physics", "French"],
+          ["French", "English", "English", "Guidance", "History"],
+          ["French", "Physical Education", "English", "Physical Education", "Computer Science"],
+          ["Chemistry", "Biology", "Mathematics", "Chinese", "Mathematics"],
+          ["English", "French", "Computer Science", "Computer Science", "English"],
+          ["Biology", "Mathematics", "Chinese", "English", "Physics"]
+        ],
+        B: [
+          ["Physics", "Mathematics", "History", "Physics", "History"],
+          ["English", "Chinese", "French", "Guidance", "English"],
+          ["Mathematics", "Physical Education", "Computer Science", "Physical Education", "Mathematics"],
+          ["Biology", "History", "English", "English", "Chinese"],
+          ["French", "Mathematics", "Mathematics", "Chinese", "Chemistry"],
+          ["Computer Science", "Computer Science", "Chemistry", "Chemistry", "Biology"]
+        ]
+      };
+  
+      const roomData = {
+        A: [
+          ["E1", "Z1", "Z1", "C4", "F5"],
+          ["F5", "B19", "B19", "C10", "Z1"],
+          ["F5", "PE", "B19", "PE", "A14"],
+          ["C18", "C6", "C10", "E1", "C10"],
+          ["B19", "F5", "A14", "A14", "B19"],
+          ["Z4", "C10", "E1", "B19", "C4"]
+        ],
+        B: [
+          ["C4", "C10", "Z1", "Z3", "Z1"],
+          ["B19", "E1", "F5", "C10", "B19"],
+          ["C10", "PE", "A14", "PE", "C10"],
+          ["C19", "Z1", "B19", "B19", "T4"],
+          ["F5", "C10", "C10", "E1", "C6"],
+          ["A14", "A14", "C18", "C18", "C18"]
+        ]
+      };
+  
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+  
+      document.getElementById("LoginBtn").onclick = async () => {
+        const email = document.getElementById("adminEmail").value;
+        const pass = document.getElementById("adminPass").value;
+        try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { alert("Login failed"); }
+      };
+      document.getElementById("LogoutBtn").onclick = () => signOut(auth);
+      onAuthStateChanged(auth, (user) => {
+        document.getElementById("LoginBtn").style.display = user ? "none" : "inline-block";
+        document.getElementById("LogoutBtn").style.display = user ? "inline-block" : "none";
+      });
+  
+      let currentWeek = "A";
+      document.getElementById("weekA").onclick = () => { currentWeek = "A"; document.getElementById("weekLabel").textContent = "Week A"; renderTimetable(); };
+      document.getElementById("weekB").onclick = () => { currentWeek = "B"; document.getElementById("weekLabel").textContent = "Week B"; renderTimetable(); };
+  
+      
+  
+      async function renderTimetable() {
+        const container = document.getElementById("timetable");
+        container.innerHTML = "";
+        const days = ["", "Mon", "Tue", "Wed", "Thu", "Fri"];
+      
+        days.forEach(day => {
+          const cell = document.createElement("div");
+          cell.className = "header-cell";
+          cell.textContent = day;
+          container.appendChild(cell);
+        });
+      
+        let rowIndex = 0;
+        for (const row of timetableData[currentWeek]) {
+          const periodCell = document.createElement("div");
+          periodCell.className = "header-cell";
+          periodCell.textContent = rowIndex + 1;
+          container.appendChild(periodCell);
+      
+          let colIndex = 0;
+          for (const subject of row) {
+            const room = roomData[currentWeek][rowIndex][colIndex];
+            let statusEmoji = ""; 
+            
+            const docRef = doc(db, "subjects", subject.replace(/\s+/g, '_'));
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists() && docSnap.data().tasks && docSnap.data().tasks.length > 0) {
+              const tasks = docSnap.data().tasks;
+              const closest = Math.min(...tasks.map(t => t.dueDate));
+              const diff = closest - Date.now();
+              
+              if (diff < 172800000) statusEmoji = "🔴 ";
+              else if (diff < 432000000) statusEmoji = "🟡 ";
+              else statusEmoji = "🟢 ";
+            }
+      
+            const cell = document.createElement("div");
+            cell.className = "timetable-cell";
+            cell.innerHTML = `<strong>${statusEmoji}${subject}</strong><small style="color: #666;">${room}</small>`;
+            cell.onclick = () => openPopup(subject);
+            container.appendChild(cell);
+            colIndex++;
+          }
+          rowIndex++;
+        }
+      }
+  
+      async function openPopup(subject) {
+        const overlay = document.getElementById("overlay");
+        const taskList = document.getElementById("taskList");
+        const modalTitle = document.getElementById("modalTitle");
+        
+        modalTitle.textContent = subject;
+        overlay.style.display = "flex";
+        taskList.innerHTML = "Loading tasks...";
+
+        const docRef = doc(db, "subjects", subject.replace(/\s+/g, '_'));
+        
+        const loadTasks = async () => {
+          const docSnap = await getDoc(docRef);
+          taskList.innerHTML = "";
+          if (docSnap.exists() && docSnap.data().tasks) {
+            docSnap.data().tasks.forEach((taskObj) => {
+              const div = document.createElement("div");
+              div.className = "task-item";
+              div.innerHTML = `
+                <span>${taskObj.task} <br><small>Due: ${taskObj.date}</small></span>
+                <button class="del-task-btn">Delete</button>
+              `;
+              div.querySelector(".del-task-btn").onclick = async () => {
+                await updateDoc(docRef, { tasks: arrayRemove(taskObj) });
+                loadTasks();
+              };
+              taskList.appendChild(div);
+            });
+          } else {
+            taskList.innerHTML = "<p>No tasks found.</p>";
+          }
+        };
+  
+        await loadTasks();
+  
+
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.replaceWith(saveBtn.cloneNode(true));
+        document.getElementById("saveBtn").onclick = async () => {
+          const task = document.getElementById("taskText").value;
+          const date = document.getElementById("dueDate").value + "T01:00:00";
+          const dueDate = Date.parse(date)
+          if(!task) return alert("Enter a task");
+  
+          const newTask = { task, date, id: Date.now(), dueDate };
+          
+          const docSnap = await getDoc(docRef);
+          if (!docSnap.exists()) {
+            await setDoc(docRef, { tasks: [newTask] });
+          } else {
+            await updateDoc(docRef, { tasks: arrayUnion(newTask) });
+          }
+          
+          document.getElementById("taskText").value = "";
+          loadTasks();
+        };
+      }
+  
+      document.getElementById("closeBtn").onclick = () => {
+        document.getElementById("overlay").style.display = "none";
+      };
+  
+      renderTimetable();
+    </script>
+  </body>
+</html>
