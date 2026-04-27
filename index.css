@@ -41,3 +41,11 @@ body {
 .titles:hover {
   text-decoration: underline;
 }
+
+.no-hover,
+.no-hover:hover,
+.no-hover:focus,
+.no-hover:active {
+  color: white;
+  text-decoration: none;
+}
