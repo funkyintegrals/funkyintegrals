@@ -1,51 +1,67 @@
 body {
   margin: 0;
-  font-family: Consolas, monospace;
+  font-family: Arial, sans-serif;
 }
 
 #hover-zone {
   position: fixed;
-  left: 0;
   top: 0;
-  width: 20px;
+  left: 0;
+  width: 12px;
   height: 100vh;
   z-index: 1000;
 }
 
 #sidebar {
   position: fixed;
-  left: -250px;
   top: 0;
+  left: -250px;
   width: 250px;
   height: 100vh;
-  background: #111;
-  color: white;
+
   padding: 20px;
   box-sizing: border-box;
+
+  background: #333;
+  color: white;
+
   transition: left 0.3s ease;
-  border-right: 1px solid #444;
+  z-index: 999;
 }
 
 #sidebar.active {
   left: 0;
 }
 
-.titles {
+.titles,
+.titles:visited {
   display: block;
-  margin: 12px 0;
+  margin: 0 0 12px 0;
+
   color: white;
   text-decoration: none;
   font-weight: bold;
 }
 
-.titles:hover {
+.titles:hover,
+.titles:focus {
   text-decoration: underline;
 }
 
-.no-hover,
-.no-hover:hover,
-.no-hover:focus,
-.no-hover:active {
+.plain-link,
+.plain-link:visited,
+.plain-link:hover,
+.plain-link:focus,
+.plain-link:active {
+  display: inline;
+
+  margin: 0;
+  padding: 0;
+
   color: white;
+  font-weight: normal;
   text-decoration: none;
+
+  cursor: text;
+  user-select: text;
 }
