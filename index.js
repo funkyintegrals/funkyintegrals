@@ -21,5 +21,5 @@ hoverZone.addEventListener('mouseleave', () => {
     if (!isHoveringSidebar) {
       sidebar.classList.remove('active');
     }
-  }, 100);
+  }, 200);
 });
