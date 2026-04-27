@@ -38,3 +38,9 @@ body {
 #sidebar p:hover {
   text-decoration: underline;
 }
+
+#custom-link {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
