@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Consolas, "Courier New", monospace;
 }
 
 #hover-zone {
@@ -33,35 +33,34 @@ body {
   left: 0;
 }
 
-.titles,
-.titles:visited {
+.titles {
   display: block;
-  margin: 0 0 12px 0;
+  margin-bottom: 12px;
 
   color: white;
   text-decoration: none;
   font-weight: bold;
 }
 
-.titles:hover,
-.titles:focus {
+.titles:hover {
   text-decoration: underline;
 }
 
-.plain-link,
-.plain-link:visited,
-.plain-link:hover,
-.plain-link:focus,
-.plain-link:active {
+.plain-link {
   display: inline;
 
-  margin: 0;
-  padding: 0;
-
   color: white;
-  font-weight: normal;
   text-decoration: none;
+  font-weight: normal;
 
   cursor: text;
   user-select: text;
+}
+
+.plain-link:hover,
+.plain-link:focus,
+.plain-link:active,
+.plain-link:visited {
+  color: white;
+  text-decoration: none;
 }
