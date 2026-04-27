@@ -39,7 +39,7 @@ body {
   text-decoration: underline;
 }
 
-#custom-link {
+.titles {
   color: white;
   text-decoration: none;
   font-weight: bold;
