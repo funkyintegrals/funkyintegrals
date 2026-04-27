@@ -63,4 +63,5 @@ body {
 .plain-link:visited {
   color: white;
   text-decoration: none;
+  font-weight: bold;
 }
